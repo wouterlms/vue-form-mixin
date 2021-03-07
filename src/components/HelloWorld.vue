@@ -4,7 +4,7 @@
     <pre>{{ JSON.stringify(form, null, 2) }}</pre>
 
     <p>Form values</p>
-    <pre>{{ JSON.stringify(_formValues(form), null, 2) }}</pre>
+    <pre>{{ JSON.stringify(_formValues(), null, 2) }}</pre>
   </div>
 </template>
 
@@ -35,20 +35,25 @@ export default class extends Mixins(formMixin) {
     },
     object_which_will_be_exported_as_an_array: {
       value: { a: 'a', b: 'b' },
-      get: (form: Form) => {
-        const arr = []
-
-        for (const v in form.object_which_will_be_exported_as_an_array.value) {
-          arr.push(form.object_which_will_be_exported_as_an_array.value[v])
+      get: (value: any) => {
+        return Object.values(value)
+      }
+    },
+    test: {
+      children: {
+        prop: {
+          value: 'test'
         }
-
-        return arr
       }
     }
   }
 
+  created(): void {
+    this._setForm(this.form)
+  }
+
   mounted() {
-    this._addInputWatchers(this.form)
+    this._addInputWatchers()
   }
 }
 </script>

@@ -26,7 +26,9 @@ describe('form.mixin.ts', () => {
       }
     }
 
-    const values = wrapper.vm._formValues(form)
+    wrapper.vm._setForm(form)
+
+    const values = wrapper.vm._formValues()
     const expected = { property: 'value', nested: { childA: 'childA', childB: 'childB' } }
 
     expect(values).toMatchObject(expected)
@@ -77,7 +79,8 @@ describe('form.mixin.ts', () => {
       }
     }
 
-    wrapper.vm._setFormValues(form, data)
+    wrapper.vm._setForm(form)
+    wrapper.vm._setFormValues(data)
 
     expect(form).toMatchObject(expected)
   })
@@ -95,6 +98,19 @@ describe('form.mixin.ts', () => {
                   return 'error message'
                 }
               }
+            },
+            property_with_children: {
+              children: {
+                child_property: {
+                  value: null,
+                  error: null,
+                  validate: (value: any) => {
+                    if (value !== 'value') {
+                      return 'error message'
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -102,12 +118,16 @@ describe('form.mixin.ts', () => {
       render() {}
     })
 
-    wrapper.vm._addInputWatchers(wrapper.vm.$data.form)
+    wrapper.vm._setForm(wrapper.vm.$data.form)
+    wrapper.vm._addInputWatchers()
 
     wrapper.vm.$data.form.property.value = 'wrong value'
+    wrapper.vm.$data.form.property_with_children.children.child_property.value = 'wrong value'
 
     wrapper.vm.$nextTick(() => {
       expect(wrapper.vm.$data.form.property.error).toEqual('error message')
+      expect(wrapper.vm.$data.form.property_with_children.children.child_property.error).toEqual('error message')
+      expect(wrapper.vm._isValidForm(wrapper.vm.$data.form)).toBeFalsy()
       done()
     })
   })
@@ -126,7 +146,9 @@ describe('form.mixin.ts', () => {
       }
     }
 
-    const values = wrapper.vm._formValues(form)
+    wrapper.vm._setForm(form)
+
+    const values = wrapper.vm._formValues()
 
     expect(values.property).toEqual('some_value_modified')
   })
@@ -149,7 +171,8 @@ describe('form.mixin.ts', () => {
       property: 'some_value'
     }
 
-    wrapper.vm._setFormValues(form, data)
+    wrapper.vm._setForm(form)
+    wrapper.vm._setFormValues(data)
 
     expect(form.property.value).toEqual('some_value_modified')
   })

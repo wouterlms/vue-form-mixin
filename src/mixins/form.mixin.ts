@@ -4,14 +4,24 @@ import Form from '@/types/form'
 
 @Component
 export default class extends Vue {
+  private _form!: Form
+
+  /**
+   * Set form property
+   * @param form
+   */
+  protected _setForm(form: Form): void {
+    this._form = form
+  }
+
   /**
    * Set form values
    * @param form
    * @param values
    */
-  protected _setFormValues(form: Form, values: any): void {
-    Object.keys(form).forEach((input) => {
-      const formProperty = form[input]
+  protected _setFormValues(values: any): void {
+    Object.keys(this._form).forEach((input) => {
+      const formProperty = this._form[input]
 
       if ('set' in formProperty) {
         formProperty.value = formProperty.set!(values[input])
@@ -32,17 +42,17 @@ export default class extends Vue {
    * @param form
    * @param options
    */
-  protected _formValues(form: Form, options: any = {}): any {
+  protected _formValues(options: any = {}): any {
     const exclude = options.exclude || []
     const data: any = {}
 
-    for (const input in form) {
-      if (form[input].get) {
-        data[input] = form[input].get!(form[input].value)
-      } else if (form[input].children) {
-        this.getRecursiveChildValues(input, form[input].children, data)
-      } else if (exclude.indexOf(input) === -1 && form[input].value) {
-        data[input] = form[input].value
+    for (const input in this._form) {
+      if (this._form[input].get) {
+        data[input] = this._form[input].get!(this._form[input].value)
+      } else if (this._form[input].children) {
+        this.getRecursiveChildValues(input, this._form[input].children, data)
+      } else if (exclude.indexOf(input) === -1 && this._form[input].value) {
+        data[input] = this._form[input].value
       } else if (exclude.indexOf(input) === -1) {
         console.warn('No child or value for', input)
       }
@@ -55,14 +65,14 @@ export default class extends Vue {
    * Check if every form property is valid
    * @param form
    */
-  protected _isValidForm(form: Form): boolean {
-    for (const input in form) {
-      if ('validate' in form[input] && typeof form[input].validate!(form[input].value) === 'string') {
+  protected _isValidForm(): boolean {
+    for (const input in this._form) {
+      if ('validate' in this._form[input] && typeof this._form[input].validate!(this._form[input].value) === 'string') {
         return false
       }
 
-      if ('children' in form[input]) {
-        if (this.hasChildErrors(input, form[input].children)) {
+      if ('children' in this._form[input]) {
+        if (this.hasChildErrors(input, this._form[input].children)) {
           return false
         }
       }
@@ -75,21 +85,20 @@ export default class extends Vue {
    * Add watchers to all properties with a value and validation
    * @param form
    */
-  protected _addInputWatchers(form: Form): void {
-    for (const input in form) {
-      if ('value' in form[input] && 'validate' in form[input]) {
+  protected _addInputWatchers(): void {
+    for (const input in this._form) {
+      if ('value' in this._form[input] && 'validate' in this._form[input]) {
         this.$watch(
           function() {
-            return form[input].value
+            return this._form[input].value
           },
           function() {
-            form[input].error = form[input].validate!(form[input].value)
+            this._form[input].error = this._form[input].validate!(this._form[input].value)
           },
           { deep: true }
         )
-        if ('children' in form[input]) {
-          this.setRecursiveChildWatchers(input, form[input].children)
-        }
+      } else if ('children' in this._form[input]) {
+        this.setRecursiveChildWatchers(input, this._form[input].children)
       }
     }
   }
