@@ -47,11 +47,11 @@ export default class extends Vue {
     const data: any = {}
 
     for (const input in this._form) {
-      if (this._form[input].get) {
+      if ('get' in this._form[input]) {
         data[input] = this._form[input].get!(this._form[input].value)
-      } else if (this._form[input].children) {
+      } else if ('children' in this._form[input]) {
         this.getRecursiveChildValues(input, this._form[input].children, data)
-      } else if (exclude.indexOf(input) === -1 && this._form[input].value) {
+      } else if ('value' in this._form[input] && exclude.indexOf(input) === -1) {
         data[input] = this._form[input].value
       } else if (exclude.indexOf(input) === -1) {
         console.warn('No child or value for', input)
@@ -157,9 +157,13 @@ export default class extends Vue {
    */
   private getRecursiveChildValues(path: string, children: any, data: any): void {
     for (const child in children) {
-      if (children[child].value) {
-        this.setDeep(data, `${path}.${child}`, children[child].value, true)
-      } else if (children[child].children) {
+      if ('value' in children[child]) {
+        if ('get' in children[child]) {
+          this.setDeep(data, `${path}.${child}`, children[child].get(children[child].value), true)
+        } else {
+          this.setDeep(data, `${path}.${child}`, children[child].value, true)
+        }
+      } else if ('children' in children[child]) {
         this.getRecursiveChildValues(`${path}.${child}`, children[child].children, data)
       } else {
         console.warn('No child or value for', `${path}.${child}`)
@@ -176,7 +180,7 @@ export default class extends Vue {
     for (const child in children) {
       if ('validate' in children[child] && typeof children[child].validate!(children[child].value) === 'string') {
         return true
-      } else if (children[child].children) {
+      } else if ('children' in children[child]) {
         return this.hasChildErrors(`${path}.${child}`, children[child].children)
       } else {
         return false

@@ -5,7 +5,7 @@ import formMixin from '@/mixins/form.mixin'
 import Form from '@/types/form'
 
 describe('form.mixin.ts', () => {
-  it('should get form values', () => {
+  it('should get form values and _isValidForm should be truthy', () => {
     const wrapper = mount(formMixin, {
       render() {}
     })
@@ -32,6 +32,7 @@ describe('form.mixin.ts', () => {
     const expected = { property: 'value', nested: { childA: 'childA', childB: 'childB' } }
 
     expect(values).toMatchObject(expected)
+    expect(wrapper.vm._isValidForm()).toBeTruthy()
   })
 
   it('should set form values', () => {
@@ -85,7 +86,7 @@ describe('form.mixin.ts', () => {
     expect(form).toMatchObject(expected)
   })
 
-  it('should validate the form property', (done) => {
+  it('should validate the properties and show errors', (done) => {
     const wrapper = mount(formMixin, {
       data() {
         return {
@@ -143,6 +144,16 @@ describe('form.mixin.ts', () => {
         get: (value) => {
           return `${value}_modified`
         }
+      },
+      parent: {
+        children: {
+          child_property: {
+            value: 'some_child_value',
+            get: (value) => {
+              return `${value}_modified`
+            }
+          }
+        }
       }
     }
 
@@ -151,9 +162,10 @@ describe('form.mixin.ts', () => {
     const values = wrapper.vm._formValues()
 
     expect(values.property).toEqual('some_value_modified')
+    expect(values.parent.child_property).toEqual('some_child_value_modified')
   })
 
-  it('should set the correct value from the getter', () => {
+  it('should set the correct value from the setter', () => {
     const wrapper = mount(formMixin, {
       render() {}
     })
