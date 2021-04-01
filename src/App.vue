@@ -6,8 +6,8 @@
     <p>Form values</p>
     <pre>{{ JSON.stringify(_formValues(), null, 2) }}</pre>
 
-    <p>Form data</p>
-    <pre>{{ JSON.stringify(_formData(), null, 2) }}</pre>
+    <p>Valid form?</p>
+    <pre>{{ JSON.stringify(_isValidForm(), null, 2) }}</pre>
   </div>
 </template>
 
@@ -39,7 +39,7 @@ export default class extends Mixins(formMixin) {
     }
   }
   mounted() {
-    // Dit zou van de API terugkomen
+    // Mock API data
     const mockData = {
       name: 'Wouter',
       style: {
@@ -48,13 +48,13 @@ export default class extends Mixins(formMixin) {
       }
     }
 
-    // Set form voor mixin
+    // Set form
     this._setForm(this.form)
 
-    // Vul het form in
+    //  Fill form
     this._setFormValues(mockData)
 
-    // Voeg dynamisch watchers toe voor alle properties
+    // Add value watchers to validate properties
     this._addInputWatchers()
   }
 

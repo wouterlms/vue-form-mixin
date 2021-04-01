@@ -89,8 +89,12 @@ export default class extends Vue {
    */
   protected _isValidForm(): boolean {
     for (const input in this._form) {
-      if ('validate' in this._form[input] && typeof this._form[input].validate!(this._form[input].value) === 'string') {
-        return false
+      if ('validate' in this._form[input]) {
+        const validationResponse = this._form[input].validate!(this._form[input].value)
+
+        if (typeof validationResponse === 'string' || (typeof validationResponse === 'boolean' && !validationResponse)) {
+          return false
+        }
       }
 
       if ('children' in this._form[input]) {
@@ -200,8 +204,12 @@ export default class extends Vue {
    */
   private hasChildErrors(path: string, children: any): any {
     for (const child in children) {
-      if ('validate' in children[child] && typeof children[child].validate!(children[child].value) === 'string') {
-        return true
+      if ('validate' in children[child]) {
+        const validationResponse = children[child].validate!(children[child].value)
+
+        if (typeof validationResponse === 'string' || (typeof validationResponse === 'boolean' && !validationResponse)) {
+          return true
+        }
       } else if ('children' in children[child]) {
         return this.hasChildErrors(`${path}.${child}`, children[child].children)
       } else {

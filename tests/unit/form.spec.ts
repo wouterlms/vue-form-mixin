@@ -112,6 +112,15 @@ describe('form.mixin.ts', () => {
                   }
                 }
               }
+            },
+            property_with_boolean_error: {
+              value: null,
+              error: null,
+              validate: (value: any) => {
+                if (value !== 'value') {
+                  return false
+                }
+              }
             }
           }
         }
@@ -124,10 +133,12 @@ describe('form.mixin.ts', () => {
 
     wrapper.vm.$data.form.property.value = 'wrong value'
     wrapper.vm.$data.form.property_with_children.children.child_property.value = 'wrong value'
+    wrapper.vm.$data.form.property_with_boolean_error.value = 'wrong value'
 
     wrapper.vm.$nextTick(() => {
       expect(wrapper.vm.$data.form.property.error).toEqual('error message')
       expect(wrapper.vm.$data.form.property_with_children.children.child_property.error).toEqual('error message')
+      expect(wrapper.vm.$data.form.property_with_boolean_error.error).toEqual(false)
       expect(wrapper.vm._isValidForm(wrapper.vm.$data.form)).toBeFalsy()
       done()
     })
