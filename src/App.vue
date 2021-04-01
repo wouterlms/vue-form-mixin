@@ -1,19 +1,69 @@
 <template>
   <div id="app">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+    <p>Form:</p>
+    <pre>{{ JSON.stringify(form, null, 2) }}</pre>
+
+    <p>Form values</p>
+    <pre>{{ JSON.stringify(_formValues(), null, 2) }}</pre>
+
+    <p>Form data</p>
+    <pre>{{ JSON.stringify(_formData(), null, 2) }}</pre>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import HelloWorld from './components/HelloWorld.vue'
+import formMixin from '@/mixins/form.mixin'
+import Form from '@/types/form'
+import { Component, Mixins, Vue } from 'vue-property-decorator'
 
-@Component({
-  components: {
-    HelloWorld
+@Component
+export default class extends Mixins(formMixin) {
+  form: Form = {
+    name: {
+      value: null,
+      error: null,
+      validate: this.validateValue
+    },
+    style: {
+      children: {
+        color: {
+          value: null
+        },
+        border_radius: {
+          value: null
+        }
+      }
+    },
+    students: {
+      value: ['John', 'Philip', 'Anna']
+    }
   }
-})
-export default class App extends Vue {}
+  mounted() {
+    // Dit zou van de API terugkomen
+    const mockData = {
+      name: 'Wouter',
+      style: {
+        color: 'orange',
+        border_radius: '5px'
+      }
+    }
+
+    // Set form voor mixin
+    this._setForm(this.form)
+
+    // Vul het form in
+    this._setFormValues(mockData)
+
+    // Voeg dynamisch watchers toe voor alle properties
+    this._addInputWatchers()
+  }
+
+  onSubmit(): void {
+    const formValues = this._formValues()
+  }
+
+  validateValue(): void {}
+}
 </script>
 
 <style>

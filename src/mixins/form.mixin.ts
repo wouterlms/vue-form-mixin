@@ -62,6 +62,28 @@ export default class extends Vue {
   }
 
   /**
+   * Get the formValues as a FormData object
+   * @param options
+   */
+  protected _formData(options: any = {}): FormData {
+    const formData = new FormData()
+    const formValues = this._formValues(options)
+
+    for (const property in formValues) {
+      const value = formValues[property]
+
+      // stringify objects and arrays
+      if (typeof value === 'object') {
+        formData.set(property, JSON.stringify(value))
+      } else {
+        formData.set(property, value)
+      }
+    }
+
+    return formData
+  }
+
+  /**
    * Check if every form property is valid
    * @param form
    */
