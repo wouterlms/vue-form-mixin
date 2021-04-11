@@ -144,6 +144,61 @@ describe('form.mixin.ts', () => {
     })
   })
 
+  it('should validate the properties and show errors without the values being changed', (done) => {
+    const wrapper = mount(formMixin, {
+      data() {
+        return {
+          form: {
+            property: {
+              value: null,
+              error: null,
+              validate: (value: any) => {
+                if (value !== 'value') {
+                  return 'error message'
+                }
+              }
+            },
+            property_with_children: {
+              children: {
+                child_property: {
+                  value: null,
+                  error: null,
+                  validate: (value: any) => {
+                    if (value !== 'value') {
+                      return 'error message'
+                    }
+                  }
+                }
+              }
+            },
+            property_with_boolean_error: {
+              value: null,
+              error: null,
+              validate: (value: any) => {
+                if (value !== 'value') {
+                  return false
+                }
+              }
+            }
+          }
+        }
+      },
+      render() {}
+    })
+
+    wrapper.vm._setForm(wrapper.vm.$data.form)
+    wrapper.vm._addInputWatchers()
+    wrapper.vm._showErrors()
+
+    wrapper.vm.$nextTick(() => {
+      expect(wrapper.vm.$data.form.property.error).toEqual('error message')
+      expect(wrapper.vm.$data.form.property_with_children.children.child_property.error).toEqual('error message')
+      expect(wrapper.vm.$data.form.property_with_boolean_error.error).toEqual(false)
+      expect(wrapper.vm._isValidForm(wrapper.vm.$data.form)).toBeFalsy()
+      done()
+    })
+  })
+
   it('should get the correct value from the getter', () => {
     const wrapper = mount(formMixin, {
       render() {}

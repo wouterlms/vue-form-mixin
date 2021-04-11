@@ -22,12 +22,16 @@ export default class extends Mixins(formMixin) {
     name: {
       value: null,
       error: null,
-      validate: this.validateValue
+      validate: () => {}
     },
     style: {
       children: {
         color: {
-          value: null
+          value: null,
+          error: null,
+          validate: (v: any) => {
+            return v !== 'red'
+          }
         },
         border_radius: {
           value: null
@@ -35,7 +39,11 @@ export default class extends Mixins(formMixin) {
       }
     },
     students: {
-      value: ['John', 'Philip', 'Anna']
+      value: ['John', 'Philip', 'Anna'],
+      error: null,
+      validate: (v: any) => {
+        return 'Error message'
+      }
     }
   }
   mounted() {
@@ -55,7 +63,9 @@ export default class extends Mixins(formMixin) {
     this._setFormValues(mockData)
 
     // Add value watchers to validate properties
-    this._addInputWatchers()
+    // this._addInputWatchers()
+
+    // this._showFormErrors()
   }
 
   onSubmit(): void {

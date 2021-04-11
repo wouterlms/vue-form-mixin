@@ -1,6 +1,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 import Form from '@/types/form'
+import { AxiosError } from 'axios'
 
 @Component
 export default class extends Vue {
@@ -12,6 +13,47 @@ export default class extends Vue {
    */
   protected _setForm(form: Form): void {
     this._form = form
+    this.validateForm()
+  }
+
+  /**
+   * Show warning logs for invalid form data
+   */
+  private validateForm(): void {
+    for (const input in this._form) {
+      const v = this._form[input]
+
+      if (!('value' in v) && !('validate' in v) && !('children' in v) && !('get' in v) && !('set' in v)) {
+        console.warn(`[form.mixin] ${input} has no purpose`)
+      } else if ('validate' in v && !('error' in v)) {
+        console.warn(`[form.mixin] ${input} has a validation rule, but no 'error' property`)
+      }
+
+      if ('children' in v) {
+        this.validateFormChildren(input, this._form[input].children)
+      }
+    }
+  }
+
+  /**
+   * Show warning logs for invalid form data
+   * @param path
+   * @param children
+   */
+  private validateFormChildren(path: string, children: any): void {
+    for (const child in children) {
+      const v = children[child]
+
+      if (!('value' in v) && !('validate' in v) && !('children' in v) && !('get' in v) && !('set' in v)) {
+        console.warn(`[form.mixin] ${path}.${child} has no purpose`)
+      } else if ('validate' in v && !('error' in v)) {
+        console.warn(`[form.mixin] ${path}.${child} has a validation rule, but no 'error' property`)
+      }
+
+      if ('children' in children[child]) {
+        this.validateFormChildren(`${path}.${child}`, children[child].children)
+      }
+    }
   }
 
   /**
@@ -24,17 +66,27 @@ export default class extends Vue {
       const formProperty = this._form[input]
 
       if ('set' in formProperty) {
-        formProperty.value = formProperty.set!(values[input])
+        formProperty.value = formProperty.set!(values[input], values)
       } else if ('value' in formProperty) {
         if (values[input]) {
           formProperty.value = values[input]
         }
       } else if ('children' in formProperty) {
         this.setRecursiveChildValues(input, formProperty.children, values)
-      } else {
-        console.warn('No child or value for', input)
       }
     })
+  }
+
+  /**
+   * Set form errors
+   * @param axiosError
+   */
+  protected _setFormErrors(axiosError: AxiosError): void {
+    if (axiosError.response) {
+      for (const input in axiosError.response.data.errors) {
+        this._form[input].error = axiosError.response.data.errors[input][0]
+      }
+    }
   }
 
   /**
@@ -47,14 +99,12 @@ export default class extends Vue {
     const data: any = {}
 
     for (const input in this._form) {
-      if ('get' in this._form[input]) {
+      if ('get' in this._form[input] && exclude.indexOf(input) === -1) {
         data[input] = this._form[input].get!(this._form[input].value)
       } else if ('children' in this._form[input]) {
         this.getRecursiveChildValues(input, this._form[input].children, data)
       } else if ('value' in this._form[input] && exclude.indexOf(input) === -1) {
         data[input] = this._form[input].value
-      } else if (exclude.indexOf(input) === -1) {
-        console.warn('No child or value for', input)
       }
     }
 
@@ -105,6 +155,35 @@ export default class extends Vue {
     }
 
     return true
+  }
+
+  /**
+   * Show form errors, can be used to display errors before have been
+   * modified and thus do not display an error message yet
+   */
+  protected _showErrors(): void {
+    for (const input in this._form) {
+      if ('value' in this._form[input] && 'validate' in this._form[input]) {
+        this._form[input].error = this._form[input].validate!(this._form[input].value)
+      } else if ('children' in this._form[input]) {
+        this._setRecursiveChildErrors(input, this._form[input].children)
+      }
+    }
+  }
+
+  /**
+   * Show errors of all children which have an invalid value
+   * @param path
+   * @param children
+   */
+  protected _setRecursiveChildErrors(path: string, children: any): void {
+    for (const child in children) {
+      if ('value' in children[child] && 'validate' in children[child]) {
+        children[child].error = children[child].validate!(children[child].value)
+      } else if (children[child].children) {
+        this._setRecursiveChildErrors(`${path}.${child}`, children[child].children)
+      }
+    }
   }
 
   /**
@@ -164,13 +243,12 @@ export default class extends Vue {
     for (const child in children) {
       if ('value' in children[child]) {
         const value = this.getDeep(data, `${path}.${child}`)
+
         if (value) {
           children[child].value = value
         }
       } else if ('children' in children[child]) {
         this.setRecursiveChildValues(`${path}.${child}`, children[child].children, data)
-      } else {
-        console.warn(`${path}.${child}`, 'has neither a value nor children, what do you expect me to do???')
       }
     }
   }
@@ -191,8 +269,6 @@ export default class extends Vue {
         }
       } else if ('children' in children[child]) {
         this.getRecursiveChildValues(`${path}.${child}`, children[child].children, data)
-      } else {
-        console.warn('No child or value for', `${path}.${child}`)
       }
     }
   }
